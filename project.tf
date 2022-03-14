@@ -43,11 +43,12 @@ resource "azurerm_network_interface" "example" {
     name                          = "internal"
     subnet_id                     = azurerm_subnet.example.id
     private_ip_address_allocation = "Dynamic"
+    public_ip_address_id = azurerm_public_ip.public_ip.id
   }
 }
 
 resource "azurerm_linux_virtual_machine" "example" {
-  name                = "example-machine"
+  name                = "example-machine2"
   resource_group_name = azurerm_resource_group.example.name
   location            = azurerm_resource_group.example.location
   size                = "Standard_B1s"
@@ -89,7 +90,7 @@ resource "azurerm_network_security_group" "example" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "22"
-    source_address_prefix      = "*" # put your up here
+    source_address_prefix      = "136.37.125.36" # put your ip here
     destination_address_prefix = "*"
   }
 
@@ -105,7 +106,42 @@ resource "azurerm_network_security_group" "example" {
     destination_address_prefix = "*"
   }
 
+  security_rule {
+    name                   = "HTTP"
+    priority               = 120
+    direction              = "Inbound"
+    access                 = "Allow"
+    protocol               = "Tcp"
+    source_port_range      = "*"
+    destination_port_range = "80"
+    source_address_prefix  = "*"
+    destination_address_prefix = "*"
+  }
+
+  security_rule {
+    name                   = "DenyAll"
+    priority               = 4096
+    direction              = "Inbound"
+    access                 = "Deny"
+    protocol               = "Tcp"
+    source_port_range      = "*"
+    destination_port_range = "*"
+    source_address_prefix  = "*"
+    destination_address_prefix = "*"
+  }
+
   tags = {
     environment = "Production"
   }
+}
+resource "azurerm_network_interface_security_group_association" "example" {
+  network_interface_id      = azurerm_network_interface.example.id
+  network_security_group_id = azurerm_network_security_group.example.id
+}
+
+resource "azurerm_public_ip" "example" {
+  name                = "exampleMachinePublicIP"
+  resource_group_name = azurerm_resource_group.example.name
+  location            = azurerm_resource_group.example.location
+  allocation_method   = "Static"
 }
